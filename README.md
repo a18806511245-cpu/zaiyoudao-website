@@ -124,6 +124,12 @@ Response:
 
 ### Vercel 部署 (推荐)
 
+#### 已部署地址
+
+- **生产环境**: https://zaiyoudao-website.vercel.app
+- **预览地址**: https://zaiyoudao-website-qdgwgwgpp-a18806511245-8526s-projects.vercel.app
+- **GitHub 仓库**: https://github.com/a18806511245-cpu/zaiyoudao-website
+
 #### 步骤 1: 上传代码到 GitHub
 
 ```bash

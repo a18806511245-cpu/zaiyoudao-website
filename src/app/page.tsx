@@ -16,8 +16,10 @@ import {
   Layers,
   FileText,
   Mail,
-  MapPin
+  MapPin,
+  ChevronLeft
 } from 'lucide-react'
+import AnalysisReport from '@/components/AnalysisReport'
 
 // Logo 组件
 function Logo() {
@@ -70,7 +72,11 @@ function ReportPreview() {
 }
 
 // 图片分析模态框
-function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+function AnalyzeModal({ isOpen, onClose, onAnalysisComplete }: { 
+  isOpen: boolean; 
+  onClose: () => void;
+  onAnalysisComplete: (result: any, imageUrl: string) => void;
+}) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -104,7 +110,7 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       const formData = new FormData()
       formData.append('file', selectedFile)
       
-      const response = await fetch('/api/analyze/simple', {
+      const response = await fetch('/api/analyze/detailed', {
         method: 'POST',
         body: formData,
       })
@@ -112,7 +118,7 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       const data = await response.json()
       
       if (data.code === 200) {
-        alert(`分析完成！得分: ${data.data.score}分\n\n${data.data.summary || '请查看详细报告'}`)
+        onAnalysisComplete(data.data, previewUrl)
         onClose()
       } else {
         setError(data.msg || '分析失败，请重试')
@@ -122,7 +128,7 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
     } finally {
       setIsAnalyzing(false)
     }
-  }, [selectedFile, onClose])
+  }, [selectedFile, onClose, onAnalysisComplete, previewUrl])
 
   const handleRemove = useCallback(() => {
     if (previewUrl) {
@@ -152,7 +158,8 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <div className="loading-text">正在分析中...</div>
-            <div className="loading-hint">预计需要 10-30 秒</div>
+            <div className="loading-hint">预计需要 20-60 秒</div>
+            <div className="loading-sub-hint">AI 正在识别户型、分析布局、评估能量...</div>
           </div>
         ) : (
           <>
@@ -188,7 +195,7 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                   点击上传图片
                 </p>
                 <p style={{ fontSize: '14px', color: 'var(--text-gray)' }}>
-                  支持 JPG、PNG 格式，文件小于 10MB
+                  支持 JPG、PNG 户型图或室内照片，文件小于 10MB
                 </p>
               </div>
             )}
@@ -199,7 +206,7 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                 onClick={handleAnalyze}
                 disabled={!selectedFile}
               >
-                开始分析
+                开始详细分析
               </button>
             </div>
           </>
@@ -211,6 +218,30 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
 export default function HomePage() {
   const [showAnalyzeModal, setShowAnalyzeModal] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<any>(null)
+  const [resultImageUrl, setResultImageUrl] = useState<string>('')
+
+  const handleAnalysisComplete = useCallback((result: any, imageUrl: string) => {
+    setAnalysisResult(result)
+    setResultImageUrl(imageUrl)
+    setShowAnalyzeModal(false)
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setAnalysisResult(null)
+    setResultImageUrl('')
+  }, [])
+
+  // 显示分析报告
+  if (analysisResult && resultImageUrl) {
+    return (
+      <AnalysisReport 
+        result={analysisResult} 
+        imageUrl={resultImageUrl}
+        onReset={handleReset}
+      />
+    )
+  }
 
   return (
     <>
@@ -247,291 +278,256 @@ export default function HomePage() {
           </h1>
           
           <p className="hero-subtitle">
-            专注东方居住美学的 AI 空间分析顾问。通过多模态大模型解读户型，为您提供科学、有据可循的改善建议。
+            融合千年东方智慧与现代空间科学<br/>
+            深度解析家居能量，量身定制优化方案
           </p>
           
           <div className="hero-actions">
             <button 
-              className="btn-primary"
+              className="hero-cta primary"
               onClick={() => setShowAnalyzeModal(true)}
             >
               <Sparkles size={20} />
               立即体验
             </button>
-            <a href="#features" className="btn-secondary">
+            <button className="hero-cta secondary">
+              <BookOpen size={20} />
               了解更多
-            </a>
+            </button>
+          </div>
+          
+          <div className="hero-stats">
+            <div className="stat">
+              <span className="stat-value">10,000+</span>
+              <span className="stat-label">用户信赖之选</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">98.6%</span>
+              <span className="stat-label">分析准确率</span>
+            </div>
+            <div className="stat">
+              <span className="stat-value">15min</span>
+              <span className="stat-label">快速出具报告</span>
+            </div>
           </div>
         </div>
         
         <div className="hero-visual">
-          <div className="hero-image">
-            <div className="hero-image-header">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <div className="hero-image-body">
-              <ReportPreview />
-            </div>
+          <div className="hero-report">
+            <ReportPreview />
           </div>
         </div>
       </section>
 
       {/* 痛点解析 */}
-      <section className="pain-points" id="pain-points">
+      <section id="pain-points" className="section">
         <div className="section-header">
-          <div className="section-tag">痛点解析</div>
-          <h2>买房租房，您是否也面临这些困扰？</h2>
-          <p>传统方式缺乏客观参考，我们用 AI 技术帮您量化分析</p>
+          <div className="section-tag">
+            <Zap size={16} />
+            痛点解析
+          </div>
+          <h2>您的家是否面临这些问题？</h2>
+          <p>传统装修缺乏整体规划，入住后才发现问题重重</p>
         </div>
         
-        <div className="pain-cards">
+        <div className="pain-points-grid">
           <div className="pain-card">
-            <div className="pain-icon">
-              <Home size={28} />
-            </div>
-            <h3>选房缺乏客观标准</h3>
-            <p>面对多个备选房源，不知道如何对比评估。户型图看起来都差不多，难以判断优劣。</p>
+            <div className="pain-icon">💰</div>
+            <h3>花费巨大，居住体验不佳</h3>
+            <p>投入数十万装修，却总觉得哪里不对劲，说不清道不明的压抑感挥之不去</p>
           </div>
-          
           <div className="pain-card">
-            <div className="pain-icon">
-              <Zap size={28} />
-            </div>
-            <h3>装修后才发现问题</h3>
-            <p>入住后发现采光不足、动线混乱，此时改造成本高，只能将就居住多年。</p>
+            <div className="pain-icon">😔</div>
+            <h3>家人健康问题频发</h3>
+            <p>身体莫名不适，检查无果。换个房间睡眠改善，问题根源却在空间能量</p>
           </div>
-          
           <div className="pain-card">
-            <div className="pain-icon">
-              <Shield size={28} />
-            </div>
-            <h3>缺乏专业可信的指导</h3>
-            <p>网上信息良莠不齐，缺乏系统性、可量化的分析方法和专业参考。</p>
+            <div className="pain-icon">📉</div>
+            <h3>事业财运持续低迷</h3>
+            <p>努力付出却收获甚微，机会总是擦肩而过。财富能量需要空间布局引导</p>
+          </div>
+          <div className="pain-card">
+            <div className="pain-icon">💔</div>
+            <h3>家庭关系日渐紧张</h3>
+            <p>夫妻争执增加，孩子叛逆不爱回家。空间气场影响家庭成员情绪状态</p>
+          </div>
+          <div className="pain-card">
+            <div className="pain-icon">😴</div>
+            <h3>睡眠质量持续下降</h3>
+            <p>躺在床上辗转反侧难以入眠，卧室的能量布局可能正在消耗你的精气神</p>
+          </div>
+          <div className="pain-card">
+            <div className="pain-icon">🎯</div>
+            <h3>想要改变却无从下手</h3>
+            <p>网上信息繁杂难辨真伪，缺乏专业人士指导，优化方案无从实施</p>
           </div>
         </div>
       </section>
 
-      {/* 核心功能 */}
-      <section className="features" id="features">
+      {/* 产品功能 */}
+      <section id="features" className="section alt">
         <div className="section-header">
-          <div className="section-tag">核心功能</div>
-          <h2>AI 赋能的空间分析</h2>
-          <p>上传户型图，AI 立即为您生成详细的空间能量分析报告</p>
+          <div className="section-tag">
+            <Brain size={16} />
+            产品功能
+          </div>
+          <h2>AI 智能分析，让改变有据可依</h2>
+          <p>基于海量案例训练的专业模型，精准识别空间问题</p>
         </div>
         
         <div className="features-grid">
           <div className="feature-card">
-            <div className="feature-number">01</div>
-            <h3>一键上传智能识别</h3>
-            <p>支持多种图片格式上传，AI 自动识别户型结构、门窗位置等关键信息。</p>
-            <span className="feature-tag">多格式兼容</span>
+            <div className="feature-icon">
+              <Layers size={32} />
+            </div>
+            <h3>智能户型识别</h3>
+            <p>AI 自动识别户型结构、门窗位置、家具布局，精准定位问题区域</p>
           </div>
-          
           <div className="feature-card">
-            <div className="feature-number">02</div>
-            <h3>多维度量化评估</h3>
-            <p>从门的位置、采光通风、动线设计等维度打分，用数据说话。</p>
-            <span className="feature-tag">科学量化</span>
+            <div className="feature-icon">
+              <TrendingUp size={32} />
+            </div>
+            <h3>能量场分析</h3>
+            <p>基于传统智慧与现代空间科学的能量流动模型，评估各区域能量状态</p>
           </div>
-          
           <div className="feature-card">
-            <div className="feature-number">03</div>
-            <h3>个性化改善建议</h3>
-            <p>根据分析结果，提供针对性的改善建议和优化方案。</p>
-            <span className="feature-tag">因地制宜</span>
+            <div className="feature-icon">
+              <Shield size={32} />
+            </div>
+            <h3>问题诊断</h3>
+            <p>深度解读空间布局隐患，量化呈现问题严重程度及对生活的影响</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Sparkles size={32} />
+            </div>
+            <h3>优化方案</h3>
+            <p>因地制宜的调整建议，从简单摆放到布局改造循序渐进的解决方案</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">
+              <FileText size={32} />
+            </div>
+            <h3>完整报告</h3>
+            <p>可视化评分系统、专业分析报告、逐项优化建议，一键生成分析文档</p>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon">
+              <Home size={32} />
+            </div>
+            <h3>案例参考</h3>
+            <p>海量真实案例库，相似户型参考借鉴，避免重复踩坑</p>
           </div>
         </div>
       </section>
 
       {/* 理论基石 */}
-      <section className="methodology" id="methodology">
-        <div className="methodology-content">
-          <div className="section-tag">理论基石</div>
-          <h2>千年智慧 + 现代科技</h2>
-          <div className="methodology-highlight">
-            "形峦为骨，理气为魂"
+      <section id="methodology" className="section">
+        <div className="section-header">
+          <div className="section-tag">
+            <BookOpen size={16} />
+            理论基石
           </div>
-          <p>
-            我们以传统空间智慧为理论基础，结合现代建筑学、心理学研究成果，<br/>
-            构建了一套可量化、可复现的空间分析体系。
-          </p>
-          
-          <div className="tech-stack">
-            <div className="tech-badge">
-              <Brain size={20} />
-              多模态大模型
-            </div>
-            <div className="tech-badge">
-              <BookOpen size={20} />
-              传统空间智慧
-            </div>
-            <div className="tech-badge">
-              <Layers size={20} />
-              现代建筑学
-            </div>
-            <div className="tech-badge">
-              <Sparkles size={20} />
-              AI 智能分析
-            </div>
-          </div>
+          <h2>传承千年的空间智慧</h2>
+          <p>精选 18 部经典典籍，构建专业知识体系</p>
         </div>
-      </section>
-
-      {/* 报告预览 */}
-      <section className="report-showcase">
-        <div className="showcase-container">
-          <div className="showcase-content">
-            <h2>全方位空间分析报告</h2>
-            <p>
-              报告涵盖空间布局的多个核心维度，通过可视化图表展示分析结果，
-              让您对居住环境有更清晰的认知。
-            </p>
-            <ul className="showcase-list">
-              <li>
-                <Check size={20} />
-                <span>四象限分析：门外、室内、角落、整体</span>
-              </li>
-              <li>
-                <Check size={20} />
-                <span>多维度评分：门、采光、通风、动线、布局</span>
-              </li>
-              <li>
-                <Check size={20} />
-                <span>个性化改善建议与优先级排序</span>
-              </li>
-              <li>
-                <Check size={20} />
-                <span>历史记录追踪，持续优化居住体验</span>
-              </li>
-            </ul>
-            <button 
-              className="btn-primary"
-              onClick={() => setShowAnalyzeModal(true)}
-            >
-              <FileText size={20} />
-              免费体验
-            </button>
-          </div>
-          
-          <div className="showcase-visual">
-            <div className="chart-container">
-              <div className="section-header" style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontSize: '20px' }}>能量雷达图</h2>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-                <svg width="280" height="280" viewBox="0 0 280 280">
-                  {/* 背景五边形 */}
-                  <polygon points="140,30 243,98 209,226 71,226 37,98" fill="none" stroke="#E8E8E8" strokeWidth="1"/>
-                  <polygon points="140,58 218,110 191,210 89,210 62,110" fill="none" stroke="#E8E8E8" strokeWidth="1"/>
-                  <polygon points="140,86 193,122 173,194 107,194 87,122" fill="none" stroke="#E8E8E8" strokeWidth="1"/>
-                  <polygon points="140,114 168,134 155,178 125,178 112,134" fill="none" stroke="#E8E8E8" strokeWidth="1"/>
-                  {/* 中心点 */}
-                  <circle cx="140" cy="140" r="3" fill="#E8E8E8"/>
-                  
-                  {/* 评分数据 */}
-                  <polygon 
-                    points="140,45 235,105 195,215 100,210 55,105" 
-                    fill="rgba(196, 30, 58, 0.2)" 
-                    stroke="#C41E3A" 
-                    strokeWidth="2"
-                  />
-                  
-                  {/* 标签 */}
-                  <text x="140" y="20" textAnchor="middle" fontSize="12" fill="#666">门(90)</text>
-                  <text x="255" y="105" textAnchor="start" fontSize="12" fill="#666">采(85)</text>
-                  <text x="215" y="240" textAnchor="middle" fontSize="12" fill="#666">通(88)</text>
-                  <text x="65" y="240" textAnchor="middle" fontSize="12" fill="#666">动(82)</text>
-                  <text x="25" y="105" textAnchor="end" fontSize="12" fill="#666">布(87)</text>
-                </svg>
-              </div>
-              <div className="chart-legend">
-                <div className="legend-item">
-                  <div className="legend-dot score"></div>
-                  <span>您的评分</span>
-                </div>
-                <div className="legend-item">
-                  <div className="legend-dot average"></div>
-                  <span>平均水平</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 团队与品牌 */}
-      <section className="team" id="team">
-        <div className="team-content">
-          <div className="team-quote">
-            我们相信，好的居住环境不应该只属于少数人的特权。
-            通过 AI 技术，我们希望让更多人能够科学地改善自己的居住空间，
-            让每一个家都能成为真正的避风港。
-          </div>
-          
-          <div className="team-founder">
-            <div className="founder-avatar">创</div>
-            <div className="founder-info">
-              <div className="founder-name">宅有道团队</div>
-              <div className="founder-title">专注东方居住美学</div>
-            </div>
-          </div>
-          
-          <div className="team-stats">
-            <div className="stat-item">
-              <div className="stat-value">50+</div>
-              <div className="stat-label">经典文献深度解析</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">10+</div>
-              <div className="stat-label">核心维度评估体系</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">1000+</div>
-              <div className="stat-label">用户体验与反馈</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 底部 CTA */}
-      <section className="footer-cta">
-        <h2>开启您的空间优化之旅</h2>
-        <p>扫码体验 AI 空间分析，让家更宜居</p>
         
-        <div className="qr-section">
-          <div style={{ textAlign: 'center' }}>
-            <div className="qr-code">
-              <div className="qr-placeholder">
-                小程序码
-              </div>
-            </div>
-            <div className="qr-label">微信小程序</div>
+        <div className="methodology-content">
+          <div className="methodology-text">
+            <h3>经典典籍体系</h3>
+            <p>整合《青囊经》《葬经》《撼龙经》《雪心赋》《发微论》等18部传统经典，提取核心空间能量理论，结合现代建筑学、人体工程学、环境心理学，形成系统化的分析框架。</p>
+            
+            <h3>AI 技术赋能</h3>
+            <p>基于深度学习模型对海量户型案例进行学习训练，结合专家标注数据，不断优化分析准确率。让传统智慧在数字时代焕发新生。</p>
+            
+            <h3>科学评估体系</h3>
+            <p>建立涵盖空间布局、采光通风、动线设计、色彩能量等维度的量化评估模型，让分析结果客观可衡量。</p>
           </div>
           
+          <div className="books-grid">
+            <div className="book-tag">青囊经</div>
+            <div className="book-tag">葬经</div>
+            <div className="book-tag">撼龙经</div>
+            <div className="book-tag">雪心赋</div>
+            <div className="book-tag">发微论</div>
+            <div className="book-tag">博山篇</div>
+            <div className="book-tag">催官篇</div>
+            <div className="book-tag">地理正宗</div>
+            <div className="book-tag">金锁玉关</div>
+            <div className="book-tag">玉尺经</div>
+            <div className="book-tag">住宅风水图解</div>
+            <div className="book-tag">更多...</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 关于我们 */}
+      <section id="team" className="section alt">
+        <div className="section-header">
+          <div className="section-tag">
+            <Home size={16} />
+            关于我们
+          </div>
+          <h2>专注、专业、专心</h2>
+          <p>致力于用科技传承智慧，让每个家庭都能受益于空间能量</p>
+        </div>
+        
+        <div className="team-content">
+          <div className="team-card">
+            <div className="team-avatar">AI</div>
+            <h3>智能分析系统</h3>
+            <p>融合传统智慧与现代 AI 技术，精准识别空间问题</p>
+          </div>
+          <div className="team-card">
+            <div className="team-avatar">📚</div>
+            <h3>专业知识库</h3>
+            <p>18 部经典典籍系统化整理，深度学习训练优化</p>
+          </div>
+          <div className="team-card">
+            <div className="team-avatar">🔬</div>
+            <h3>科学方法论</h3>
+            <p>量化评估模型，客观分析有据可依</p>
+          </div>
+        </div>
+        
+        <div className="contact-section">
+          <h3>联系我们</h3>
+          <p>有任何问题或建议，欢迎随时联系</p>
           <div className="contact-info">
             <div className="contact-item">
               <Mail size={18} />
-              <span>contact@zhaiyoudao.com</span>
+              <span>contact@zaiyoudao.com</span>
             </div>
             <div className="contact-item">
               <MapPin size={18} />
-              <span>专注东方居住美学</span>
+              <span>线上服务，全国可用</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer>
-        <p>© 2024 宅有道 AI FENG SHUI. All rights reserved.</p>
+      {/* 底部 */}
+      <footer className="footer">
+        <div className="footer-content">
+          <Logo />
+          <p className="footer-desc">
+            传承千年智慧，用科技连接美好生活<br/>
+            让每个家都成为安心之所
+          </p>
+          <div className="footer-links">
+            <a href="#">隐私政策</a>
+            <a href="#">用户协议</a>
+            <a href="#">关于我们</a>
+          </div>
+          <p className="footer-copy">© 2025 宅有道. All rights reserved.</p>
+        </div>
       </footer>
 
-      {/* 图片分析模态框 */}
+      {/* 分析弹窗 */}
       <AnalyzeModal 
-        isOpen={showAnalyzeModal} 
-        onClose={() => setShowAnalyzeModal(false)} 
+        isOpen={showAnalyzeModal}
+        onClose={() => setShowAnalyzeModal(false)}
+        onAnalysisComplete={handleAnalysisComplete}
       />
     </>
   )
