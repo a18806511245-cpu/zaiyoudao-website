@@ -104,7 +104,7 @@ function AnalyzeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
       const formData = new FormData()
       formData.append('file', selectedFile)
       
-      const response = await fetch('/api/analyze/upload', {
+      const response = await fetch('/api/analyze/simple', {
         method: 'POST',
         body: formData,
       })
