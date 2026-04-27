@@ -1,12 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Supabase 配置
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-// 创建 Supabase 客户端
-const supabase = createClient(supabaseUrl, supabaseKey)
 
 // 简化的分析结果生成
 function generateMockAnalysis(imageUrl: string) {
@@ -78,12 +70,6 @@ function generateMockAnalysis(imageUrl: string) {
         { priority: 'low' as const, text: '调整灯光', time: '本月' },
       ],
       highlights: [],
-      analysisSteps: [
-        { step: 1, title: '上传图片', description: '正在上传图片...', status: 'completed' as const },
-        { step: 2, title: 'AI 分析', description: '正在分析空间能量...', status: 'completed' as const },
-        { step: 3, title: '生成报告', description: '正在生成报告...', status: 'completed' as const },
-      ],
-      generatedAt: new Date().toISOString(),
     },
   }
 }
@@ -117,46 +103,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 上传图片到 Supabase Storage
-    const fileName = `analyze_${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`
-    const fileBuffer = await file.arrayBuffer()
+    // 创建图片预览 URL（本地测试用）
+    const imageUrl = URL.createObjectURL(file)
     
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('zaiyoudao-images')
-      .upload(fileName, fileBuffer, {
-        contentType: file.type,
-        upsert: false,
-      })
-
-    if (uploadError) {
-      console.error('上传图片失败:', uploadError)
-      return NextResponse.json(
-        { code: 500, msg: '图片上传失败' },
-        { status: 500 }
-      )
-    }
-
-    // 获取公开 URL
-    const { data: urlData } = supabase.storage
-      .from('zaiyoudao-images')
-      .getPublicUrl(fileName)
-
-    const imageUrl = urlData.publicUrl
+    console.log('处理图片:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      previewUrl: imageUrl
+    })
 
     // 生成分析结果（模拟）
     const result = generateMockAnalysis(imageUrl)
 
-    // 保存分析记录到数据库
+    // 如果有 userId，可以在这里保存到数据库
+    // 暂时跳过数据库操作，直接返回结果
     if (userId) {
-      await supabase.from('analysis_records').insert({
-        user_id: userId,
-        source: 'website',
-        image_url: imageUrl,
-        score: result.data.score,
-        grade: result.data.grade,
-        result_json: result.data,
-        created_at: new Date().toISOString(),
-      })
+      console.log('用户ID:', userId)
     }
 
     return NextResponse.json(result)
