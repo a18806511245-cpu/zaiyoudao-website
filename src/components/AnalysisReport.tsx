@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { ChevronLeft, Home, Star } from 'lucide-react'
 
 interface AnalysisResult {
   id: string
@@ -39,7 +40,7 @@ interface AnalysisResult {
   }[]
   positiveTags: string[]
   negativeTags: string[]
-  ancientWisdom?: string[]  // 古籍引用
+  ancientWisdom?: string[]
 }
 
 interface AnalysisReportProps {
@@ -48,68 +49,293 @@ interface AnalysisReportProps {
   onReset: () => void
 }
 
-// 圆形进度条组件
-const CircleProgress = ({ score, size = 120, strokeWidth = 10, color = '#22c55e' }: {
-  score: number
-  size?: number
-  strokeWidth?: number
-  color?: string
-}) => {
-  const radius = (size - strokeWidth) / 2
-  const circumference = radius * 2 * Math.PI
-  const progress = circumference - (score / 100) * circumference
+// 获取分数颜色
+function getScoreColor(score: number): string {
+  if (score >= 80) return 'text-green-600'
+  if (score >= 60) return 'text-amber-600'
+  return 'text-red-600'
+}
 
+function getScoreBgColor(score: number): string {
+  if (score >= 80) return 'bg-green-100'
+  if (score >= 60) return 'bg-amber-100'
+  return 'bg-red-100'
+}
+
+function getScoreBarColor(score: number): string {
+  if (score >= 80) return 'bg-green-500'
+  if (score >= 60) return 'bg-amber-500'
+  return 'bg-red-500'
+}
+
+function getGradeText(grade: string): string {
+  const map: Record<string, string> = {
+    'excellent': '卓越',
+    'good': '良好',
+    'moderate': '中等',
+    'poor': '欠佳'
+  }
+  return map[grade] || grade
+}
+
+function getGradeEmoji(grade: string): string {
+  const map: Record<string, string> = {
+    'excellent': '🏆',
+    'good': '✨',
+    'moderate': '📊',
+    'poor': '💡'
+  }
+  return map[grade] || '📋'
+}
+
+export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisReportProps) {
   return (
-    <div className="relative inline-flex items-center justify-center">
-      <svg width={size} height={size} className="-rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#e5e7eb"
-          strokeWidth={strokeWidth}
-          fill="none"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={progress}
-          style={{ transition: 'stroke-dashoffset 1.5s ease-in-out' }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-gray-800">{score}</span>
-        <span className="text-xs text-gray-500">分</span>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
+      {/* 顶部导航 */}
+      <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+          <button 
+            onClick={onReset}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ChevronLeft size={20} />
+            <span className="text-sm">返回首页</span>
+          </button>
+          <h1 className="text-base font-semibold text-gray-900">分析报告</h1>
+          <div className="w-16"></div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* 报告标题 */}
+        <div className="text-center py-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-medium mb-4">
+            <Star size={16} />
+            AI 智能分析报告
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">家居空间能量分析</h2>
+          <p className="text-sm text-gray-500">基于古籍智慧与现代空间科学的综合评估</p>
+        </div>
+
+        {/* 用户上传的图片 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h3 className="text-sm font-medium text-gray-700">您上传的图片</h3>
+          </div>
+          <div className="p-6">
+            <img 
+              src={imageUrl} 
+              alt="用户上传" 
+              className="w-full max-h-80 object-contain rounded-xl bg-gray-50"
+            />
+          </div>
+        </div>
+
+        {/* 总体评分 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            {/* 圆形分数 */}
+            <div className="relative">
+              <svg className="w-40 h-40 -rotate-90">
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  stroke="#e5e7eb"
+                  strokeWidth="12"
+                  fill="none"
+                />
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="70"
+                  stroke={result.gradeColor}
+                  strokeWidth="12"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeDasharray={`${(result.score / 100) * 440} 440`}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-4xl font-bold text-gray-900">{result.score}</span>
+                <span className="text-sm text-gray-500">综合评分</span>
+              </div>
+            </div>
+
+            {/* 等级信息 */}
+            <div className="flex-1 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-full mb-4">
+                <span className="text-2xl">{getGradeEmoji(result.grade)}</span>
+                <span className="text-lg font-semibold text-amber-800">{getGradeText(result.grade)}</span>
+                <span className="text-sm text-amber-600">({result.gradeText})</span>
+              </div>
+              <p className="text-gray-600 leading-relaxed">{result.overallComment}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 分项评分 */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h3 className="text-base font-semibold text-gray-900 mb-6 flex items-center gap-2">
+            <span className="w-1 h-5 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full"></span>
+            分项评分
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <ScoreItem label="整体布局" score={result.scores.overall} />
+            <ScoreItem label="空间布局" score={result.scores.layout} />
+            <ScoreItem label="采光通风" score={result.scores.light} />
+            <ScoreItem label="通风情况" score={result.scores.ventilation} />
+            <ScoreItem label="整洁程度" score={result.scores.tidy} />
+            <ScoreItem label="能量气场" score={result.scores.energy} />
+          </div>
+        </div>
+
+        {/* 优点 */}
+        {result.advantages && result.advantages.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 text-sm">✓</span>
+              </span>
+              空间优点
+            </h3>
+            <div className="space-y-3">
+              {result.advantages.map((item, index) => (
+                <div key={index} className="flex items-start gap-3 p-4 bg-green-50/50 rounded-xl">
+                  <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs font-bold flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">{item.title}</p>
+                    <p className="text-sm text-gray-600">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 问题 */}
+        {result.disadvantages && result.disadvantages.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-sm">!</span>
+              </span>
+              潜在问题
+            </h3>
+            <div className="space-y-3">
+              {result.disadvantages.map((item, index) => (
+                <div key={index} className="flex items-start gap-3 p-4 bg-red-50/50 rounded-xl">
+                  <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center text-red-600 text-xs font-bold flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">{item.title}</p>
+                    <p className="text-sm text-gray-600">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 区域分析 */}
+        {result.areaAnalysis && result.areaAnalysis.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-1 h-5 bg-gradient-to-b from-amber-500 to-orange-500 rounded-full"></span>
+              区域详细分析
+            </h3>
+            <div className="space-y-4">
+              {result.areaAnalysis.map((area, index) => (
+                <AreaCard key={index} area={area} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 改进建议 */}
+        {result.improvementSuggestions && result.improvementSuggestions.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-sm">💡</span>
+              </span>
+              优化建议
+            </h3>
+            <div className="space-y-3">
+              {result.improvementSuggestions.map((item, index) => (
+                <div key={index} className="flex items-start gap-3 p-4 bg-blue-50/50 rounded-xl">
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-bold flex-shrink-0">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 mb-1">{item.title}</p>
+                    <p className="text-sm text-gray-600">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 古籍智慧 */}
+        {result.ancientWisdom && result.ancientWisdom.length > 0 && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-200 p-6">
+            <h3 className="text-base font-semibold text-amber-900 mb-4 flex items-center gap-2">
+              <span className="text-2xl">📜</span>
+              古籍智慧
+            </h3>
+            <div className="space-y-4">
+              {result.ancientWisdom.map((wisdom, index) => (
+                <p key={index} className="text-sm text-amber-800 leading-relaxed italic">
+                  "{wisdom}"
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 返回按钮 */}
+        <div className="py-8 text-center">
+          <button
+            onClick={onReset}
+            className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <Home size={18} />
+            返回首页，再次分析
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-// 分数条组件
-const ScoreBar = ({ label, score, color = '#3b82f6' }: { label: string; score: number; color?: string }) => (
-  <div className="flex items-center gap-3">
-    <span className="w-20 text-sm text-gray-600">{label}</span>
-    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-      <div
-        className="h-full rounded-full transition-all duration-1000 ease-out"
-        style={{ width: `${score}%`, backgroundColor: color }}
-      />
+// 分数项组件
+function ScoreItem({ label, score }: { label: string; score: number }) {
+  return (
+    <div className="bg-gray-50 rounded-xl p-4">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-gray-600">{label}</span>
+        <span className={`text-lg font-semibold ${getScoreColor(score)}`}>{score}</span>
+      </div>
+      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div 
+          className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreBarColor(score)}`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
     </div>
-    <span className="w-10 text-sm font-medium text-gray-700 text-right">{score}</span>
-  </div>
-)
+  )
+}
 
 // 区域分析卡片
-const AreaCard = ({ area }: { area: AnalysisResult['areaAnalysis'][0] }) => {
+function AreaCard({ area }: { area: AnalysisResult['areaAnalysis'][0] }) {
   const statusConfig = {
     good: { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: '✓' },
-    moderate: { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: '~' },
+    moderate: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', icon: '~' },
     poor: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: '!' }
   }
   const config = statusConfig[area.status as keyof typeof statusConfig] || statusConfig.moderate
@@ -121,17 +347,17 @@ const AreaCard = ({ area }: { area: AnalysisResult['areaAnalysis'][0] }) => {
           <span className="text-xl">{area.icon}</span>
           <span className="font-semibold text-gray-800">{area.area}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`${config.text} text-sm font-medium`}>得分 {area.score}</span>
+        <div className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreBgColor(area.score)} ${getScoreColor(area.score)}`}>
+          {area.score}分
         </div>
       </div>
       
       {area.findings.length > 0 && (
-        <div className="mb-2">
+        <div className="mb-3">
           <span className="text-xs text-gray-500 uppercase tracking-wide">观察</span>
           <ul className="mt-1 space-y-1">
             {area.findings.map((finding, i) => (
-              <li key={i} className="text-sm text-gray-600 flex items-start gap-1">
+              <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
                 <span className="text-green-500">•</span>
                 {finding}
               </li>
@@ -141,11 +367,11 @@ const AreaCard = ({ area }: { area: AnalysisResult['areaAnalysis'][0] }) => {
       )}
       
       {area.problems.length > 0 && (
-        <div className="mb-2">
+        <div className="mb-3">
           <span className="text-xs text-red-400 uppercase tracking-wide">问题</span>
           <ul className="mt-1 space-y-1">
             {area.problems.map((problem, i) => (
-              <li key={i} className="text-sm text-red-600 flex items-start gap-1">
+              <li key={i} className="text-sm text-red-600 flex items-start gap-2">
                 <span className="text-red-400">!</span>
                 {problem}
               </li>
@@ -159,7 +385,7 @@ const AreaCard = ({ area }: { area: AnalysisResult['areaAnalysis'][0] }) => {
           <span className="text-xs text-blue-400 uppercase tracking-wide">建议</span>
           <ul className="mt-1 space-y-1">
             {area.suggestions.map((suggestion, i) => (
-              <li key={i} className="text-sm text-blue-600 flex items-start gap-1">
+              <li key={i} className="text-sm text-blue-600 flex items-start gap-2">
                 <span className="text-blue-400">→</span>
                 {suggestion}
               </li>
@@ -167,213 +393,6 @@ const AreaCard = ({ area }: { area: AnalysisResult['areaAnalysis'][0] }) => {
           </ul>
         </div>
       )}
-    </div>
-  )
-}
-
-// 古籍引用卡片
-const AncientWisdomCard = ({ wisdom }: { wisdom: string }) => (
-  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
-    <div className="flex items-start gap-3">
-      <span className="text-2xl">📜</span>
-      <p className="text-sm text-amber-800 italic leading-relaxed">{wisdom}</p>
-    </div>
-  </div>
-)
-
-export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisReportProps) {
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50">
-      {/* 头部报告标题 */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 text-white p-8 shadow-xl">
-        <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-2xl font-medium mb-2">家居能量分析报告</h2>
-          <p className="text-amber-100 text-sm">基于古籍智慧与空间能量的专业评估</p>
-        </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
-        {/* 总体评分 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
-          <CircleProgress score={result.score} size={160} strokeWidth={14} color={result.gradeColor} />
-          <div className="mt-6">
-            <span 
-              className="inline-block px-6 py-2 rounded-full text-white text-xl font-bold shadow-md"
-              style={{ backgroundColor: result.gradeColor }}
-            >
-              {result.grade}级 · {result.gradeText}
-            </span>
-          </div>
-          <p className="mt-6 text-gray-600 text-base leading-relaxed max-w-xl mx-auto">
-            {result.overallComment}
-          </p>
-        </div>
-
-        {/* 上传的图片 */}
-        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-          <img 
-            src={imageUrl} 
-            alt="分析图片" 
-            className="w-full h-72 object-cover"
-          />
-          <div className="p-4 text-center text-sm text-gray-500">
-            分析图片
-          </div>
-        </div>
-
-        {/* 各项评分 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-            <span className="text-2xl">📊</span> 详细评分
-          </h3>
-          <div className="space-y-5 max-w-lg mx-auto">
-            <ScoreBar label="空间布局" score={result.scores.layout} color="#8b5cf6" />
-            <ScoreBar label="采光分析" score={result.scores.light} color="#f59e0b" />
-            <ScoreBar label="通风状况" score={result.scores.ventilation} color="#06b6d4" />
-            <ScoreBar label="整洁程度" score={result.scores.tidy} color="#10b981" />
-            <ScoreBar label="能量状态" score={result.scores.energy} color="#ec4899" />
-          </div>
-        </div>
-
-        {/* 优点 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-            <span className="text-2xl">✨</span> 优点分析
-          </h3>
-          <div className="space-y-4 max-w-2xl mx-auto">
-            {result.advantages.map((adv, i) => (
-              <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100">
-                <span className="text-green-500 text-xl flex-shrink-0">✓</span>
-                <div className="flex-1">
-                  <span className="font-medium text-green-800 text-lg">{adv.title}</span>
-                  <p className="text-sm text-green-600 mt-1 leading-relaxed">{adv.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 缺点 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-            <span className="text-2xl">📝</span> 不足之处
-          </h3>
-          <div className="space-y-4 max-w-2xl mx-auto">
-            {result.disadvantages.map((dis, i) => (
-              <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-100">
-                <span className="text-amber-500 text-xl flex-shrink-0">!</span>
-                <div className="flex-1">
-                  <span className="font-medium text-amber-800 text-lg">{dis.title}</span>
-                  <p className="text-sm text-amber-600 mt-1 leading-relaxed">{dis.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 古籍智慧引用 */}
-        {result.ancientWisdom && result.ancientWisdom.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center flex items-center justify-center gap-2">
-              <span className="text-2xl">📚</span> 古籍智慧
-            </h3>
-            {result.ancientWisdom.map((wisdom, i) => (
-              <AncientWisdomCard key={i} wisdom={wisdom} />
-            ))}
-          </div>
-        )}
-
-        {/* 区域分析 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-            <span className="text-2xl">🏠</span> 区域分析
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {result.areaAnalysis.map((area, i) => (
-              <AreaCard key={i} area={area} />
-            ))}
-          </div>
-        </div>
-
-        {/* 改进建议 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-            <span className="text-2xl">💡</span> 改进建议
-          </h3>
-          <div className="space-y-4 max-w-2xl mx-auto">
-            {result.improvementSuggestions.map((suggestion, i) => (
-              <div 
-                key={i} 
-                className={`flex items-start gap-4 p-4 rounded-2xl ${
-                  suggestion.priority === '高' ? 'bg-gradient-to-r from-red-50 to-pink-50 border border-red-100' : 
-                  suggestion.priority === '中' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-100' : 
-                  'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100'
-                }`}
-              >
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  suggestion.priority === '高' ? 'bg-red-500 text-white' : 
-                  suggestion.priority === '中' ? 'bg-yellow-500 text-white' : 'bg-blue-500 text-white'
-                }`}>
-                  {suggestion.priority}
-                </span>
-                <div className="flex-1">
-                  <span className="font-medium text-gray-800 text-lg">{suggestion.title}</span>
-                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">{suggestion.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 问题诊断 */}
-        {result.layoutIssues.length > 0 && result.layoutIssues[0] !== '整体布局良好，无明显问题' && (
-          <div className="bg-white rounded-3xl shadow-lg p-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
-              <span className="text-2xl">⚠️</span> 问题诊断
-            </h3>
-            <ul className="space-y-3 max-w-2xl mx-auto">
-              {result.layoutIssues.map((issue, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-700 p-3 bg-amber-50 rounded-xl">
-                  <span className="w-3 h-3 bg-amber-500 rounded-full flex-shrink-0"></span>
-                  {issue}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* 标签 */}
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-          <div className="flex flex-wrap gap-3 justify-center">
-            {result.positiveTags.map((tag, i) => (
-              <span key={i} className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                #{tag}
-              </span>
-            ))}
-            {result.negativeTags.map((tag, i) => (
-              <span key={i} className="px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
-                #{tag}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* 重新分析按钮 */}
-        <div className="text-center pb-8">
-          <button
-            onClick={onReset}
-            className="px-10 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-lg"
-          >
-            重新分析
-          </button>
-        </div>
-
-        {/* 底部信息 */}
-        <div className="text-center text-sm text-gray-400 pb-12">
-          <p>本报告由 AI 结合古籍智慧分析生成，仅供参考</p>
-          <p className="mt-2 text-amber-600 font-medium">宅有道 · 家居能量分析</p>
-        </div>
-      </div>
     </div>
   )
 }
