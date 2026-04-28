@@ -39,6 +39,7 @@ interface AnalysisResult {
   }[]
   positiveTags: string[]
   negativeTags: string[]
+  ancientWisdom?: string[]  // 古籍引用
 }
 
 interface AnalysisReportProps {
@@ -79,7 +80,7 @@ const CircleProgress = ({ score, size = 120, strokeWidth = 10, color = '#22c55e'
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={progress}
-          style={{ transition: 'stroke-dashoffset 1s ease-in-out' }}
+          style={{ transition: 'stroke-dashoffset 1.5s ease-in-out' }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -170,47 +171,62 @@ const AreaCard = ({ area }: { area: AnalysisResult['areaAnalysis'][0] }) => {
   )
 }
 
+// 古籍引用卡片
+const AncientWisdomCard = ({ wisdom }: { wisdom: string }) => (
+  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+    <div className="flex items-start gap-3">
+      <span className="text-2xl">📜</span>
+      <p className="text-sm text-amber-800 italic leading-relaxed">{wisdom}</p>
+    </div>
+  </div>
+)
+
 export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisReportProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-white to-orange-50">
       {/* 头部报告标题 */}
-      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-6 rounded-b-3xl shadow-lg">
-        <div className="text-center">
-          <h2 className="text-xl font-medium mb-2">家居能量分析报告</h2>
-          <p className="text-amber-100 text-sm">专业的空间能量评估与优化建议</p>
+      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 text-white p-8 shadow-xl">
+        <div className="text-center max-w-2xl mx-auto">
+          <h2 className="text-2xl font-medium mb-2">家居能量分析报告</h2>
+          <p className="text-amber-100 text-sm">基于古籍智慧与空间能量的专业评估</p>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         {/* 总体评分 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
-          <CircleProgress score={result.score} size={140} strokeWidth={12} color={result.gradeColor} />
-          <div className="mt-4">
+        <div className="bg-white rounded-3xl shadow-lg p-8 text-center">
+          <CircleProgress score={result.score} size={160} strokeWidth={14} color={result.gradeColor} />
+          <div className="mt-6">
             <span 
-              className="inline-block px-4 py-1 rounded-full text-white text-lg font-bold"
+              className="inline-block px-6 py-2 rounded-full text-white text-xl font-bold shadow-md"
               style={{ backgroundColor: result.gradeColor }}
             >
-              {result.grade}级 {result.gradeText}
+              {result.grade}级 · {result.gradeText}
             </span>
           </div>
-          <p className="mt-4 text-gray-600 text-sm leading-relaxed">{result.overallComment}</p>
+          <p className="mt-6 text-gray-600 text-base leading-relaxed max-w-xl mx-auto">
+            {result.overallComment}
+          </p>
         </div>
 
         {/* 上传的图片 */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
           <img 
             src={imageUrl} 
             alt="分析图片" 
-            className="w-full h-64 object-cover"
+            className="w-full h-72 object-cover"
           />
+          <div className="p-4 text-center text-sm text-gray-500">
+            分析图片
+          </div>
         </div>
 
         {/* 各项评分 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">📊</span> 详细评分
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+            <span className="text-2xl">📊</span> 详细评分
           </h3>
-          <div className="space-y-4">
+          <div className="space-y-5 max-w-lg mx-auto">
             <ScoreBar label="空间布局" score={result.scores.layout} color="#8b5cf6" />
             <ScoreBar label="采光分析" score={result.scores.light} color="#f59e0b" />
             <ScoreBar label="通风状况" score={result.scores.ventilation} color="#06b6d4" />
@@ -220,17 +236,17 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
         </div>
 
         {/* 优点 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">✨</span> 优点分析
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+            <span className="text-2xl">✨</span> 优点分析
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4 max-w-2xl mx-auto">
             {result.advantages.map((adv, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-green-50 rounded-xl">
-                <span className="text-green-500 text-lg">✓</span>
-                <div>
-                  <span className="font-medium text-green-800">{adv.title}</span>
-                  <p className="text-sm text-green-600 mt-1">{adv.desc}</p>
+              <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-100">
+                <span className="text-green-500 text-xl flex-shrink-0">✓</span>
+                <div className="flex-1">
+                  <span className="font-medium text-green-800 text-lg">{adv.title}</span>
+                  <p className="text-sm text-green-600 mt-1 leading-relaxed">{adv.desc}</p>
                 </div>
               </div>
             ))}
@@ -238,29 +254,41 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
         </div>
 
         {/* 缺点 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">📝</span> 不足之处
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+            <span className="text-2xl">📝</span> 不足之处
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4 max-w-2xl mx-auto">
             {result.disadvantages.map((dis, i) => (
-              <div key={i} className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
-                <span className="text-amber-500 text-lg">!</span>
-                <div>
-                  <span className="font-medium text-amber-800">{dis.title}</span>
-                  <p className="text-sm text-amber-600 mt-1">{dis.desc}</p>
+              <div key={i} className="flex items-start gap-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl border border-amber-100">
+                <span className="text-amber-500 text-xl flex-shrink-0">!</span>
+                <div className="flex-1">
+                  <span className="font-medium text-amber-800 text-lg">{dis.title}</span>
+                  <p className="text-sm text-amber-600 mt-1 leading-relaxed">{dis.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
+        {/* 古籍智慧引用 */}
+        {result.ancientWisdom && result.ancientWisdom.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 text-center flex items-center justify-center gap-2">
+              <span className="text-2xl">📚</span> 古籍智慧
+            </h3>
+            {result.ancientWisdom.map((wisdom, i) => (
+              <AncientWisdomCard key={i} wisdom={wisdom} />
+            ))}
+          </div>
+        )}
+
         {/* 区域分析 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">🏠</span> 区域分析
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+            <span className="text-2xl">🏠</span> 区域分析
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {result.areaAnalysis.map((area, i) => (
               <AreaCard key={i} area={area} />
             ))}
@@ -268,28 +296,29 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
         </div>
 
         {/* 改进建议 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <span className="text-xl">💡</span> 改进建议
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+            <span className="text-2xl">💡</span> 改进建议
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4 max-w-2xl mx-auto">
             {result.improvementSuggestions.map((suggestion, i) => (
               <div 
                 key={i} 
-                className={`flex items-start gap-3 p-3 rounded-xl ${
-                  suggestion.priority === '高' ? 'bg-red-50' : 
-                  suggestion.priority === '中' ? 'bg-yellow-50' : 'bg-blue-50'
+                className={`flex items-start gap-4 p-4 rounded-2xl ${
+                  suggestion.priority === '高' ? 'bg-gradient-to-r from-red-50 to-pink-50 border border-red-100' : 
+                  suggestion.priority === '中' ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-100' : 
+                  'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100'
                 }`}
               >
-                <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                   suggestion.priority === '高' ? 'bg-red-500 text-white' : 
                   suggestion.priority === '中' ? 'bg-yellow-500 text-white' : 'bg-blue-500 text-white'
                 }`}>
                   {suggestion.priority}
                 </span>
-                <div>
-                  <span className="font-medium text-gray-800">{suggestion.title}</span>
-                  <p className="text-sm text-gray-600 mt-1">{suggestion.desc}</p>
+                <div className="flex-1">
+                  <span className="font-medium text-gray-800 text-lg">{suggestion.title}</span>
+                  <p className="text-sm text-gray-600 mt-1 leading-relaxed">{suggestion.desc}</p>
                 </div>
               </div>
             ))}
@@ -298,14 +327,14 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
 
         {/* 问题诊断 */}
         {result.layoutIssues.length > 0 && result.layoutIssues[0] !== '整体布局良好，无明显问题' && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-              <span className="text-xl">⚠️</span> 问题诊断
+          <div className="bg-white rounded-3xl shadow-lg p-8">
+            <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center flex items-center justify-center gap-2">
+              <span className="text-2xl">⚠️</span> 问题诊断
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-3 max-w-2xl mx-auto">
               {result.layoutIssues.map((issue, i) => (
-                <li key={i} className="flex items-center gap-2 text-gray-700">
-                  <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                <li key={i} className="flex items-center gap-3 text-gray-700 p-3 bg-amber-50 rounded-xl">
+                  <span className="w-3 h-3 bg-amber-500 rounded-full flex-shrink-0"></span>
                   {issue}
                 </li>
               ))}
@@ -314,15 +343,15 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
         )}
 
         {/* 标签 */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex flex-wrap gap-2 justify-center">
+        <div className="bg-white rounded-3xl shadow-lg p-8">
+          <div className="flex flex-wrap gap-3 justify-center">
             {result.positiveTags.map((tag, i) => (
-              <span key={i} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+              <span key={i} className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                 #{tag}
               </span>
             ))}
             {result.negativeTags.map((tag, i) => (
-              <span key={i} className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm">
+              <span key={i} className="px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
                 #{tag}
               </span>
             ))}
@@ -333,16 +362,16 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
         <div className="text-center pb-8">
           <button
             onClick={onReset}
-            className="px-8 py-3 bg-amber-600 text-white rounded-full font-medium shadow-lg hover:bg-amber-700 transition-colors"
+            className="px-10 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-medium shadow-lg hover:shadow-xl hover:from-amber-600 hover:to-orange-600 transition-all duration-300 text-lg"
           >
             重新分析
           </button>
         </div>
 
         {/* 底部信息 */}
-        <div className="text-center text-xs text-gray-400 pb-8">
-          <p>本报告由 AI 分析生成，仅供参考</p>
-          <p className="mt-1">宅有道 · 家居能量分析</p>
+        <div className="text-center text-sm text-gray-400 pb-12">
+          <p>本报告由 AI 结合古籍智慧分析生成，仅供参考</p>
+          <p className="mt-2 text-amber-600 font-medium">宅有道 · 家居能量分析</p>
         </div>
       </div>
     </div>
