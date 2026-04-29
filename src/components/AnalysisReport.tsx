@@ -291,7 +291,7 @@ export default function AnalysisReport({ result, imageUrl, onReset }: AnalysisRe
             <div className="space-y-4">
               {result.ancientWisdom.map((wisdom, index) => (
                 <p key={index} className="text-sm text-amber-800 leading-relaxed italic">
-                  "{wisdom}"
+                  「{wisdom}」
                 </p>
               ))}
             </div>

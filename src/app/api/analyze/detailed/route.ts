@@ -6,6 +6,57 @@ const BACKEND_URL = process.env.BACKEND_API_URL || 'http://localhost:3000'
 // 模拟的 userId（官网用户）
 const WEBSITE_USER_ID = 'website_user_' + Math.random().toString(36).substring(7)
 
+// 定义类型
+interface BackendDimension {
+  name: string
+  score: number
+  description?: string
+}
+
+interface BackendIssue {
+  severity: 'low' | 'mid' | 'high'
+  title: string
+  description: string
+  solution?: string
+}
+
+interface BackendAction {
+  priority: number
+  text: string
+  time?: string
+}
+
+interface BackendAreaDetail {
+  content: string
+  fengshuiMeaning?: string
+}
+
+interface BackendArea {
+  area: string
+  icon: string
+  status: 'good' | 'fair' | 'poor'
+  score: number
+  details?: BackendAreaDetail[]
+}
+
+interface BackendData {
+  id?: string
+  imageUrl?: string
+  score?: number
+  grade?: string
+  gradeDesc?: string
+  overallComment?: string
+  dimensions?: BackendDimension[]
+  issues?: BackendIssue[]
+  actions?: BackendAction[]
+  positiveTags?: string[]
+  negativeTags?: string[]
+  ancientWisdom?: string[]
+  areaAnalysis?: BackendArea[]
+  infoImageUrl?: string
+  generatedAt?: string
+}
+
 export async function POST(request: NextRequest) {
   try {
     // 解析 multipart/form-data
@@ -63,14 +114,15 @@ export async function POST(request: NextRequest) {
         data: null
       }, { status: 200 })
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('[官网分析] 分析失败:', error)
 
     // 判断错误类型
     let errorMessage = '分析失败，请稍后重试'
-    if (error.name === 'TimeoutError') {
+    const err = error as Error & { name?: string }
+    if (err.name === 'TimeoutError') {
       errorMessage = '分析超时，请尝试上传更小的图片或稍后重试'
-    } else if (error.message?.includes('fetch')) {
+    } else if (err.message?.includes('fetch')) {
       errorMessage = '无法连接到分析服务，请确保后端服务正在运行'
     }
 
@@ -83,7 +135,7 @@ export async function POST(request: NextRequest) {
 }
 
 // 将小程序后端返回的格式转换为官网展示格式
-function transformToWebsiteFormat(backendData: any) {
+function transformToWebsiteFormat(backendData: BackendData) {
   return {
     id: backendData.id || `analysis_${Date.now()}`,
     userId: WEBSITE_USER_ID,
@@ -95,12 +147,12 @@ function transformToWebsiteFormat(backendData: any) {
     gradeColor: getGradeColor(backendData.score || 70),
     overallComment: backendData.overallComment || '此宅整体格局良好，气场流通自然。',
     scores: backendData.dimensions ? {
-      overall: backendData.dimensions.find((d: any) => d.name === '综合评分')?.score || backendData.score || 70,
-      layout: backendData.dimensions.find((d: any) => d.name === '格局')?.score || 75,
-      light: backendData.dimensions.find((d: any) => d.name === '采光')?.score || 78,
-      ventilation: backendData.dimensions.find((d: any) => d.name === '通风')?.score || 72,
-      tidy: backendData.dimensions.find((d: any) => d.name === '整洁')?.score || 80,
-      energy: backendData.dimensions.find((d: any) => d.name === '能量')?.score || 70,
+      overall: backendData.dimensions.find((d) => d.name === '综合评分')?.score || backendData.score || 70,
+      layout: backendData.dimensions.find((d) => d.name === '格局')?.score || 75,
+      light: backendData.dimensions.find((d) => d.name === '采光')?.score || 78,
+      ventilation: backendData.dimensions.find((d) => d.name === '通风')?.score || 72,
+      tidy: backendData.dimensions.find((d) => d.name === '整洁')?.score || 80,
+      energy: backendData.dimensions.find((d) => d.name === '能量')?.score || 70,
     } : {
       overall: backendData.score || 70,
       layout: 75,
@@ -110,31 +162,31 @@ function transformToWebsiteFormat(backendData: any) {
       energy: 70,
     },
     advantages: (backendData.issues || [])
-      .filter((issue: any) => issue.severity === 'low')
-      .map((issue: any) => ({
+      .filter((issue) => issue.severity === 'low')
+      .map((issue) => ({
         title: issue.title,
         desc: issue.description
       })),
     disadvantages: (backendData.issues || [])
-      .filter((issue: any) => ['high', 'mid'].includes(issue.severity))
-      .map((issue: any) => ({
+      .filter((issue) => ['high', 'mid'].includes(issue.severity))
+      .map((issue) => ({
         title: issue.title,
         desc: issue.description,
         solution: issue.solution
       })),
-    improvementSuggestions: (backendData.actions || []).map((action: any) => ({
+    improvementSuggestions: (backendData.actions || []).map((action) => ({
       priority: action.priority,
       title: action.text,
       desc: `建议在 ${action.time || '近期'} 完成`
     })),
-    areaAnalysis: (backendData.areaAnalysis || []).map((area: any) => ({
+    areaAnalysis: (backendData.areaAnalysis || []).map((area) => ({
       area: area.area,
       icon: area.icon,
       status: area.status,
       score: area.score || 70,
-      findings: area.details?.map((d: any) => d.content) || [],
+      findings: area.details?.map((d) => d.content) || [],
       problems: area.status === 'poor' ? ['需要改善'] : [],
-      suggestions: area.details?.filter((d: any) => d.fengshuiMeaning)?.map((d: any) => d.fengshuiMeaning) || []
+      suggestions: area.details?.filter((d) => d.fengshuiMeaning)?.map((d) => d.fengshuiMeaning) || []
     })),
     dimensions: backendData.dimensions || [],
     issues: backendData.issues || [],

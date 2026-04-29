@@ -1,8 +1,49 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Star, BookOpen, Sparkles, Zap, Home, Shield, Brain, TrendingUp, Check, X, Upload, ChevronLeft, FileText } from 'lucide-react'
+import { Star, BookOpen, Sparkles, Zap, Home, Shield, Brain, TrendingUp, Check, X, Upload, FileText } from 'lucide-react'
 import AnalysisReport from '@/components/AnalysisReport'
+
+// 分析结果类型
+interface AnalysisResult {
+  id: string
+  userId: string
+  source: string
+  imageUrl: string
+  score: number
+  grade: string
+  gradeText: string
+  gradeColor: string
+  overallComment: string
+  scores: {
+    overall: number
+    layout: number
+    light: number
+    ventilation: number
+    tidy: number
+    energy: number
+  }
+  layoutIssues: string[]
+  advantages: { title: string; desc: string }[]
+  disadvantages: { title: string; desc: string }[]
+  areaAnalysis: {
+    area: string
+    icon: string
+    status: string
+    score: number
+    findings: string[]
+    problems: string[]
+    suggestions: string[]
+  }[]
+  improvementSuggestions: {
+    priority: string
+    title: string
+    desc: string
+  }[]
+  positiveTags: string[]
+  negativeTags: string[]
+  ancientWisdom?: string[]
+}
 
 // Logo 组件
 function Logo() {
@@ -58,7 +99,7 @@ function ReportPreview() {
 function AnalyzeModal({ isOpen, onClose, onAnalysisComplete }: { 
   isOpen: boolean; 
   onClose: () => void;
-  onAnalysisComplete: (result: any, imageUrl: string) => void;
+  onAnalysisComplete: (result: AnalysisResult, imageUrl: string) => void;
 }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>('')
@@ -107,6 +148,7 @@ function AnalyzeModal({ isOpen, onClose, onAnalysisComplete }: {
         setError(data.msg || '分析失败，请重试')
       }
     } catch (err) {
+      console.error(err)
       setError('网络错误，请检查网络连接后重试')
     } finally {
       setIsAnalyzing(false)
@@ -199,10 +241,10 @@ function AnalyzeModal({ isOpen, onClose, onAnalysisComplete }: {
 
 export default function HomePage() {
   const [showAnalyzeModal, setShowAnalyzeModal] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<any>(null)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
   const [resultImageUrl, setResultImageUrl] = useState<string>('')
 
-  const handleAnalysisComplete = useCallback((result: any, imageUrl: string) => {
+  const handleAnalysisComplete = useCallback((result: AnalysisResult, imageUrl: string) => {
     setAnalysisResult(result)
     setResultImageUrl(imageUrl)
     setShowAnalyzeModal(false)
@@ -406,7 +448,7 @@ export default function HomePage() {
           </div>
           <div className="method-card">
             <h3>《青囊经》</h3>
-            <p>风水理论核心经典，提出"得水为上，藏风次之"的核心原则</p>
+            <p>风水理论核心经典，提出「得水为上，藏风次之」的核心原则</p>
           </div>
           <div className="method-card">
             <h3>《博山篇》</h3>
